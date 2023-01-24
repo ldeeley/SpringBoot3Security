@@ -1,7 +1,10 @@
 package com.example.springboot3security.config;
 
+import com.example.springboot3security.service.UserInfoUserDetailsService;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.security.authentication.AuthenticationProvider;
+import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
@@ -21,23 +24,24 @@ public class SecurityConfig {
 
     @Bean
     //Authentication
-    public UserDetailsService userDetailsService(PasswordEncoder encoder){
-        UserDetails admin= User.withUsername("Lester")
-                .password(encoder.encode("password"))
-                .roles("ADMIN")
-                .build();
-        UserDetails user= User.withUsername("Coco")
-                .password(encoder.encode("password"))
-                .roles("USER")
-                .build();
-        return new InMemoryUserDetailsManager(admin,user);
+    public UserDetailsService userDetailsService(){
+//        UserDetails admin= User.withUsername("Lester")
+//                .password(encoder.encode("password"))
+//                .roles("ADMIN")
+//                .build();
+//        UserDetails user= User.withUsername("Coco")
+//                .password(encoder.encode("password"))
+//                .roles("USER")
+//                .build();
+//        return new InMemoryUserDetailsManager(admin,user);
+        return new UserInfoUserDetailsService();
     }
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         return http.csrf().disable()
                 .authorizeHttpRequests()
-                .requestMatchers("/products/welcome").permitAll()
+                .requestMatchers("/products/welcome","/user/newUser").permitAll()
                 .and()
                 .authorizeHttpRequests().requestMatchers("/products/**")
                 .authenticated().and().formLogin().and().build();
@@ -46,6 +50,15 @@ public class SecurityConfig {
     @Bean
     public PasswordEncoder passwordEncoder(){
         return new BCryptPasswordEncoder();
+    }
+
+
+    @Bean
+    public AuthenticationProvider authenticationProvider(){
+        DaoAuthenticationProvider authenticationProvider=new DaoAuthenticationProvider();
+        authenticationProvider.setUserDetailsService(userDetailsService());
+        authenticationProvider.setPasswordEncoder(passwordEncoder());
+        return authenticationProvider;
     }
 
 }
